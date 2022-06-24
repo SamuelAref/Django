@@ -1,0 +1,195 @@
+To install Django, 
+
+     pip install django
+
+
+To check version 
+
+     python -m django --version 
+
+
+For commands 
+
+    django-admin
+
+
+To create new project
+
+     django-admin startproject projectName
+
+
+To start server 
+
+      python manage.py runserver
+
+
+To add a new app 
+
+      python manage.py startapp blog
+
+
+Django routing 
+
+     so to route a django app:
+
+          we first create a route in project routing url file
+          then we specify the route to our specifc url app files
+
+
+Templates  
+
+      <!-- for logic we use {%} -->
+      <!-- for vaiables {} -->
+
+      - We saw creating a template and linking it
+      - sending a data to a template 
+      - creating an extendable template 
+      - Then we added bootstrap and code snippets nothing new 
+      - Then we added css - note that static files like css and js are put in folder called static in django
+      - we add static files by {% load static %}
+
+
+Admin ( user creation )
+
+     - we checked out /admin 
+     - to create a new superuser for admin page, python manage.py createsuperuser , but first we need to create a database and table for the project 
+     - To create default migrations, python manage.py makemigrations, then python manage.py migrate
+     - then we create a super user - python manage.py createsuperuser
+
+
+Databases and Migrations 
+
+     - Django ORM 
+     - We began by using the model.py file in the blog directory 
+     - then we used class model to create a table 
+     - The class looks like this 
+
+               from django.db import models
+               from django.utils import timezone
+               from django.contrib.auth.models import User
+
+               class Post(models.Model):
+
+               title = models.CharField(max_length=100) #we set the blog title to a max length of 100 characters
+               content = models.TextField() #content is a text field
+               date_posted = models.DateTimeField(default=timezone.now) # the date posted here we imported the timezone so it will correspond, the we want it to make the date it was created 
+               author = models.ForeignKey(User, on_delete=models.CASCADE) # since user (author) is a different table, we access it by using a foreign key and importing a user from django above, the "CASCADE" refers to if the user is deleted then all the blogs will be deleted and not vice versa
+
+     - After creating this, we ran the command - python manage.py makemigrations - this returns the blog migration name
+     - to see what change will be made, we can run the command - python manage.py sqlmigrate blog migrationname -
+     - to run the migration we write -  python manage.py migrate 
+     - then we use the python shell to manipulate data, python manage.py shell 
+     -    >>> from blog.models import Post 
+          >>> from django.contrib.auth.models import User
+              User.objects.all()
+              User.objects.first()
+              User.objects.filter(username = "SamuelAref") 
+              User.objects.filter(username = "SamuelAref").first()
+              user = User.objects.filter(username = "SamuelAref").first() 
+              user.id 
+              user.pk
+              user = User.objects.get(id = 1)
+              Post.objects.all()
+              post_1 = Post(title = "Blog 1", content = "First Post Content!", author = user)
+              post_1.save()
+              Post.objects.all()
+              post_2 = Post(title = "Blog 2", content = "Second Post Content!", author_id  = user.id)
+              post_2.save
+              post = Post.objects.first()
+              post.content
+             'First Post Content!'
+              post.date_posted
+              datetime.datetime(2022, 2, 18, 11, 43, 32, 450277, tzinfo=datetime.timezone.utc)
+              post.author
+              <User: SamuelAref>
+              post.author.email
+              user.post_set.all() #to obtain all the post the user wrote
+              user.post_set.create(title = "Blog 3", content = "Third Post Content!") #to create an additional post for an author of 'user'
+     - Then we added these created datas to our data instead of the dummy data by importing it from the .models
+     - Then we register our data in the admin.py file
+
+          from django.contrib import admin
+          from .models import Post 
+
+          admin.site.register(Post)
+
+
+User Registration
+
+     - We created a new app to handle user registration - python manage.py startapp users
+     - Then we added the UserConfig in the project folder's settings.py file just like our first app
+     - we added a view then we imported the form python class for simplicity and connected it to the user/register.html template 
+     - then we created a register.html file that extends the same way the templates of the blog did, then we added form contents 
+     - Then we imorted the view in project urls.py to create a url pattern 
+     - We checked validity and set the output to display valid ( to send it to another page) or not(display the form error)
+     - Then to save the user we simply use form.save()
+     - Initially when django creates a form for us, it will only contain a username and a password field, so we can add another field if we want like an email
+     - then we install crispyforms pip install django-crispy-forms
+     - then in settings.py we notify installed apps 
+     - then we update the crispy setting to bootstrap4 while still in the settings.py file type - CRISPY_TEMPLATE_PACK = 'bootstrap4' - at the end of the file
+     - then we include it in our register file 
+
+
+Login and Logout System (Authentication System)
+
+          - import from django.contrib.auth import views as auth_views in the main project folder url
+          - then while in there, we created login and logout urls
+          - then we specify where django should look for our login.html or logout.html in the argument
+          - we create the login and logout templates similar to the register template 
+          - then now we have to handle when the correct user logins 
+          - first we set the project setting  LOGIN_REDIRECT_URL = 'blog-home'
+          - then we created a logout template and redirected everything with their url names 
+          - now, we need to handle the nav bar templates to actually point to the urls, and identify if a user is already logged in or not 
+          - so we applied an if block with is authenticated
+          - then we are handling if people try to access a page if they are not logged in 
+          - we do this by creating a url route in both the users and blog project 
+          - then we created a profile template 
+          - then we set the @login required in the views of the users 
+          - then set the settings of the project  as ' LOGIN_URL = 'login' '
+
+
+User Profile and Picture 
+
+     - we open the users models
+     - then we import and create a class 
+     - after writing the class we need to install pillow for image field, by ' pip install Pillow' 
+     - then we create migrate 'python manage.py makemigrations' 
+     - then we migrate ' python manage.py migrate' 
+     - then we register the model in users admin.py
+     - then we change where we save the uploaded images in the project settings by 
+
+               MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+               MEDIA_URL = '/media/'
+
+
+     - now we are going to create a signals.py file in the users folder
+     - then we adjusted the apps.py file in the users folder 
+
+
+Update User Profile 
+
+     - first we created new forms class in the users forms.py file
+     - then we add it in the views of the users directory 
+     - then we create a form in the profile.html (don't forget enctype)
+     - then we adjust in the views of the users directory 
+     - then we adjust image upload resizing
+     - then we added the profile image to be displayed beside a user's post in the home page
+
+
+Create, Update and Delete Posts
+
+     - first we went to views.py in blog 
+     - then manipulated urls of the project 
+     - then we made the order of the blog publishing date went to views.py by ordering = ['-date_posted']
+     - then detail view in views
+     - then update and delete post 
+
+
+Pagination 
+
+     - imported dummy data in the form of json file and added it to the django shell
+     - paginate_by = 2 in views listview
+
+
+Email and Password Reset
+
